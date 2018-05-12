@@ -19,9 +19,9 @@ print(f_data.shape)
 
 
 
-# ############## Grid search
+# ############## Grid search Covariance
 # num_of_folds = 11
-# num_of_centers = [5, 10, 30]
+# num_of_centers = [6, 30, 40]
 # lamdas = [0.1, 0.3, 0.5, 0.7, 0.9]
 # folds = rbf.n_folds(f_data, num_of_folds)
 # best_par = rbf.grid_search_cov(folds, lamdas, num_of_centers)
@@ -30,7 +30,7 @@ print(f_data.shape)
 
 ############## Grid search spherical model
 num_of_folds = 11
-num_of_centers = [30, 50, 100, 150]
+num_of_centers = [10, 100, 150]
 sigmas = [0.5, 1.5, 2.0, 2.5, 3.0, 4.0]
 lamdas = [0.1, 0.3, 0.5, 0.7, 0.9]
 folds = rbf.n_folds(f_data, num_of_folds)
