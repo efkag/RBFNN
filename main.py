@@ -1,40 +1,41 @@
 import numpy as np
 import RBFN as rbf
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
 from RBFN import RBFN
 
 from scipy.cluster.vq import kmeans
 
+# 0 CRIM, 1 ZN, 2 INDUS, 3 CHAS, 4 NOX, 5 RM, 6 AGE, 7 DIS,
+# 8 RAD, 9 TAX, 10 PTRATIO, 11 B, 12 LSTAT, 13 MEDV
+
 f_data = np.loadtxt('data.txt')
 #f_data = np.transpose(f_data)
-
-
-
-coef_mtrx = np.corrcoef(f_data, rowvar=False) #calculate corelation coeeficient
-
-corr_wth_targ = coef_mtrx[-1, :-1]
-corr_wth_targ = corr_wth_targ[abs(corr_wth_targ).argsort()[::-1]]
-
-print(corr_wth_targ)
-print(f_data.shape)
-
+indices = [1, 2, 3, 4, 6, 7, 8, 11]
+data = np.delete(f_data, indices, axis=1)
 
 
 # ############## Grid search Covariance
 # num_of_folds = 11
 # num_of_centers = [6, 30, 40]
 # lamdas = [0.1, 0.3, 0.5, 0.7, 0.9]
-# folds = rbf.n_folds(f_data, num_of_folds)
+# folds = rbf.n_folds(data, num_of_folds)
 # best_par = rbf.grid_search_cov(folds, lamdas, num_of_centers)
 # ##############
 
 
-############## Grid search spherical model
+############## Grid search
 num_of_folds = 11
-num_of_centers = [10, 100, 150]
+num_of_centers = [50, 100, 150, 250]
+#num_of_centers = ['None']
 sigmas = [0.5, 1.5, 2.0, 2.5, 3.0, 4.0]
-lamdas = [0.1, 0.3, 0.5, 0.7, 0.9]
-folds = rbf.n_folds(f_data, num_of_folds)
-best_par = rbf.grid_search(folds, lamdas, sigmas, num_of_centers)
+#sigmas = ['None']
+lamdas = [0.1, 0.3, 0.5, 0.7, 0.9, 1.2, 3]
+whtning = ['True', 'False']
+scaling = ['True', 'False']
+folds = rbf.n_folds(data, num_of_folds)
+best_par = rbf.grid_search(folds, lamdas, sigmas, num_of_centers, 'gaussian',
+                           scaling, whtning)
 ##############
 
 

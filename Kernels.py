@@ -3,7 +3,7 @@ import numpy as np
 
 class GausianCov:
 
-    def run_kernel(self, vector_in, mean_v, cov_matrix=None):
+    def run(self, vector_in, mean_v, cov_matrix=None):
         '''
         Calculates the gaussian output
         :param vector_in:
@@ -20,7 +20,7 @@ class GausianCov:
 
 class GausianSphear:
 
-    def run_kernel(self, vector_in, mean_v, cov_matrix=None):
+    def run(self, vector_in, mean_v, cov_matrix=None):
         '''
         Calculate the gausian with a fixed sigma value
         :param vectori_in:
@@ -35,5 +35,8 @@ class GausianSphear:
 
 class Linear:
 
-    def run_kernel(self, vector_in, mean_v, cov_matrix=None):
+    def run(self, vector_in, mean_v, cov_matrix=None):
+        d = np.linalg.norm(vector_in - mean_v)
+        return d
+
 

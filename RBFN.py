@@ -1,5 +1,5 @@
 import numpy as np
-from decimal import Decimal
+from Kernels import *
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import Normalizer, MinMaxScaler, StandardScaler
@@ -11,7 +11,7 @@ D = 13
 
 class RBFN:
 
-    def __init__(self, num_of_centers=None, cov_matrx_model=False, sigma=1):
+    def __init__(self, kernel='linear', num_of_centers=None, cov_matrx_model=False, sigma=1):
         self.num_of_centres = num_of_centers
         self.centroids = None
         self.labels = None
@@ -25,7 +25,15 @@ class RBFN:
         self.pca = None
         self.normalizer = None
         self.scaler = None
-
+        self.kernel = None
+        if kernel == 'linear':
+            self.kernel = Linear()
+        elif kernel == 'gaussian' and cov_matrx_model:
+            self.kernel = GausianCov()
+        elif kernel == 'gaussian':
+            self.kernel = GausianSphear()
+        else:
+            print('Worng kernel type')
 
     def get_sk_centroids(self):
         km = KMeans(self.num_of_centres)
@@ -112,7 +120,8 @@ class RBFN:
         for c in range(num_data):  # for each centroid
             center = self.proc_data[c]  # temporay variable for the centroid, D dimentional
             for dtp in range(num_data):  # each data point
-                d = self.gausian_kernel(self.proc_data[dtp], None, center, self.sigma)  # run through the kernel
+                # run through the kernel
+                d = self.kernel.run(self.proc_data[dtp], center, self.sigma)
                 phi[c, dtp] = d  # save to phi matrix
         self.phi = phi
         return self.phi
@@ -123,8 +132,7 @@ class RBFN:
             phi_v = []  # intialize phi_vector for every new data point
             for c in range(self.num_of_centres):  # for each centroid
                 center = self.proc_data[c]  # get stored centroid
-                d = self.gausian_kernel(dtp, None, center, self.sigma)
-                d = np.linalg.norm(dtp - center)
+                d = self.kernel.run(dtp, center, self.sigma)
                 phi_v.append(d)  # save to phi vector
             phi_v = np.array(phi_v)
             out = np.dot(phi_v, self.weights)  # Dot product for the output
@@ -145,7 +153,9 @@ class RBFN:
                 cov_matrix = np.cov(center_dpts, rowvar=False)
                 self.cov_matrices.append(cov_matrix)  # store covariance matrix
             for dtp in range(num_data):  #each data point
-                d = self.gausian_kernel(self.proc_data[dtp], cov_matrix, center, self.sigma)  # run through the kernel
+                #d = self.gausian_kernel(self.proc_data[dtp], cov_matrix, center, self.sigma)
+                # run through the kernel
+                d = self.kernel.run(self.proc_data[dtp], center, self.sigma)
                 phi[c, dtp] = d  # save to phi matrix
 
         bias = np.ones((1, num_data))  # Create bias vector
@@ -202,9 +212,9 @@ class RBFN:
                 center = self.centroids[c]  # get stored centroid
                 # run through the kernel
                 if self.cov_matx_model:
-                    d = self.gausian_kernel(dtp, self.cov_matrices[c], center)
+                    d = self.kernel.run(dtp, center, self.cov_matrices[c])
                 else:
-                    d = self.gausian_kernel(dtp, None, center, self.sigma)
+                    d = self.kernel.run(dtp, center, self.sigma)
                 phi_v.append(d)  # save to phi vector
 
             phi_v.append(1.0)  # Append the bias node
@@ -214,18 +224,17 @@ class RBFN:
 
 
 
-def cv_fit_predict(noc, train_data, val_data, sigma, lamda, proc=True, norm=False,
+def cv_fit_predict(kernel, noc, train_data, val_data, sigma, lamda, proc=True, norm=False,
                    scale=True, pca=False, comp=None, whtn=False):
     test_in, test_out = split_inputs_targets(val_data)
     train_in, train_out = split_inputs_targets(train_data)
 
     ######## Train RBF
-    rbfn = RBFN(noc, sigma=sigma)
+    rbfn = RBFN(kernel=kernel, num_of_centers=noc, sigma=sigma)
     proc_data = rbfn.pre_proc(train_in, proc=proc, norm=norm,scale=scale,
                               pca=pca, comp=comp, whtn=whtn)
     rbfn.get_sk_centroids()
     phi_mtrx = rbfn.calc_phi()
-    #phi_mtrx = rbfn.exact_inter_phi()
     weights = rbfn.reg_weights(train_out, lamda)
     #############
     test_in = rbfn.apply_pre_rpoc(test_in, proc=proc, norm=norm, scale=scale,
@@ -233,13 +242,13 @@ def cv_fit_predict(noc, train_data, val_data, sigma, lamda, proc=True, norm=Fals
     pred_out = rbfn.predict(test_in)
     return calc_mse(pred_out, test_out)
 
-def cv_exact_fit_predict(train_data, val_data, sigma, lamda, proc=True, norm=False,
+def cv_exact_fit_predict(kernel, train_data, val_data, sigma, lamda, proc=True, norm=False,
                    scale=True, pca=False, comp=None, whtn=False):
     test_in, test_out = split_inputs_targets(val_data)
     train_in, train_out = split_inputs_targets(train_data)
 
     ######## Train RBF
-    rbfn = RBFN(sigma=sigma)
+    rbfn = RBFN(kernel=kernel, sigma=sigma)
     proc_data = rbfn.pre_proc(train_in, proc=proc, norm=norm, scale=scale,
                               pca=pca, comp=comp, whtn=whtn)
 
@@ -252,24 +261,25 @@ def cv_exact_fit_predict(train_data, val_data, sigma, lamda, proc=True, norm=Fal
     return calc_mse(pred_out, test_out)
 
 
-def grid_search(folds, lamdas, sigmas, nocs):
-    for noc in nocs:
-        for sigma in sigmas:
-            for lamda in lamdas:
-                scores=[]
-                for vf in range(len(folds)):
-                    data = bind_folds(vf, folds)
-                    score = cv_exact_fit_predict(data, folds[vf], sigma, lamda
-                                                 , proc=True, norm=False, scale=True,
-                                                 pca=False, comp=None, whtn=True)
-                    scores.append(score)
-                avrg_score = np.average(scores)
-                params = 'Params:( ' + 'Sigma: ' + str(sigma) + ' - Lamda: ' + str(lamda) + \
-                         ' - Num of centres: ' + str(noc) + ')'
-                print('Cross Validation score:', avrg_score, params)
+def grid_search(folds, lamdas, sigmas, nocs, kernel, scaling, whtning):
+    for scl in scaling:
+        for wht in whtning:
+            for noc in nocs:
+                for sigma in sigmas:
+                    for lamda in lamdas:
+                        scores=[]
+                        for vf in range(len(folds)):
+                            data = bind_folds(vf, folds)
+                            score = cv_fit_predict(kernel, noc, data, folds[vf], sigma, lamda
+                                                         , proc=True, norm=False, scale=scl,
+                                                         pca=False, comp=None, whtn=wht)
+                            scores.append(score)
+                        avrg_score = np.average(scores)
+                        params = 'Params:( ' + 'Sigma: ' + str(sigma) + ' - Lamda: ' + str(lamda) + \
+                                 ' - Num of centres: ' + str(noc) + ')'
+                        print('Cross Validation score:', avrg_score, params)
 
     return 1
-
 
 
 def grid_search_cov(folds, lamdas, nocs):
@@ -325,7 +335,7 @@ def bind_folds(vf_ind, folds):
 
 
 def n_folds(data, num_of_folds):
-    #np.random.shuffle(data)
+    np.random.shuffle(data)
     folds = np.split(data, num_of_folds)
     return folds
 
