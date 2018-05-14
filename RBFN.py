@@ -262,6 +262,8 @@ def cv_exact_fit_predict(kernel, train_data, val_data, sigma, lamda, proc=True, 
 
 
 def grid_search(folds, lamdas, sigmas, nocs, kernel, scaling, whtning):
+    best_score = np.inf
+    best_params = ''
     for scl in scaling:
         for wht in whtning:
             for noc in nocs:
@@ -278,7 +280,11 @@ def grid_search(folds, lamdas, sigmas, nocs, kernel, scaling, whtning):
                         params = 'Params:( ' + 'Sigma: ' + str(sigma) + ' - Lamda: ' + str(lamda) + \
                                  ' - Num of centres: ' + str(noc) + ')'
                         print('Cross Validation score:', avrg_score, params)
+                        if avrg_score < best_score:
+                            best_score = avrg_score
+                            best_params = params
 
+    print('--------> Best Cross Validation score:', best_score, best_params)
     return 1
 
 
