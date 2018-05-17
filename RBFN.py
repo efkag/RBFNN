@@ -261,28 +261,30 @@ def cv_exact_fit_predict(kernel, train_data, val_data, sigma, lamda, proc=True, 
     return calc_mse(pred_out, test_out)
 
 
-def grid_search(folds, lamdas, sigmas, nocs, kernel, scaling, whtning):
+def grid_search(folds, lamdas, sigmas, nocs, kernel, scaling, whtning, comps):
     best_score = np.inf
     best_params = ''
     for scl in scaling:
         for wht in whtning:
-            for noc in nocs:
-                for sigma in sigmas:
-                    for lamda in lamdas:
-                        scores=[]
-                        for vf in range(len(folds)):
-                            data = bind_folds(vf, folds)
-                            score = cv_fit_predict(kernel, noc, data, folds[vf], sigma, lamda
-                                                         , proc=True, norm=False, scale=scl,
-                                                         pca=False, comp=None, whtn=wht)
-                            scores.append(score)
-                        avrg_score = np.average(scores)
-                        params = 'Params:( ' + 'Sigma: ' + str(sigma) + ' - Lamda: ' + str(lamda) + \
-                                 ' - Num of centres: ' + str(noc) + ')'
-                        print('Cross Validation score:', avrg_score, params)
-                        if avrg_score < best_score:
-                            best_score = avrg_score
-                            best_params = params
+            for comp in comps:
+                for noc in nocs:
+                    for sigma in sigmas:
+                        for lamda in lamdas:
+                            scores=[]
+                            for vf in range(len(folds)):
+                                data = bind_folds(vf, folds)
+                                score = cv_exact_fit_predict(kernel, data, folds[vf], sigma, lamda
+                                                             , proc=True, norm=False, scale=scl,
+                                                             pca=True, comp=comp, whtn=wht)
+                                scores.append(score)
+                            avrg_score = np.mean(scores)
+                            params = 'Params:( ' + 'Scale: ' + str(scl) + ' - Whiten: ' + str(wht) + \
+                                     'Components: ' + str(comp) + ' - Num of centres: ' + str(noc) + ' - Sigma: ' + str(sigma) + \
+                                     ' - Lamda: ' + str(lamda) + ')'
+                            print('Cross Validation score:', avrg_score, params)
+                            if avrg_score < best_score:
+                                best_score = avrg_score
+                                best_params = params
 
     print('--------> Best Cross Validation score:', best_score, best_params)
     return 1

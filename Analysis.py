@@ -50,7 +50,7 @@ f, ax = plt.subplots(figsize=(11, 9))
 mask = np.zeros_like(coef_mtrx)
 mask[np.triu_indices_from(mask)] = True
 with sns.axes_style("white"):
-    ax = sns.heatmap(coef_mtrx, mask=mask, vmax=1.0,
+    ax = sns.heatmap(coef_mtrx, mask=mask, vmax=1.0, annot=True,
                      vmin=-1.0, center=0.0, square=True,
                      xticklabels=ticks, yticklabels=ticks)
 plt.show()

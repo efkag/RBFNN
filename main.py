@@ -11,7 +11,7 @@ from scipy.cluster.vq import kmeans
 
 f_data = np.loadtxt('data.txt')
 #f_data = np.transpose(f_data)
-indices = [1, 2, 3, 4, 6, 7, 8, 11]
+indices = [3, 11]
 data = np.delete(f_data, indices, axis=1)
 
 
@@ -26,16 +26,18 @@ data = np.delete(f_data, indices, axis=1)
 
 ############## Grid search
 num_of_folds = 11
-num_of_centers = [50, 100, 150, 250]
-#num_of_centers = ['None']
-sigmas = [0.5, 1.5, 2.0, 2.5, 3.0, 4.0]
-#sigmas = ['None']
-lamdas = [0.1, 0.3, 0.5, 0.7, 0.9, 1.2, 3]
+#num_of_centers = [50, 100, 150, 250]
+num_of_centers = ['None']
+#sigmas = [0.5, 1.5, 2.0, 2.5, 3.0, 4.0]
+sigmas = ['None']
+lamdas = [0.1, 0.3, 0.5, 0.7, 0.9, 1.2]
 whtning = ['True', 'False']
-scaling = ['True', 'False']
+scaling = ['True']
+PCAing = ['True', 'False']
+comps = [11, 10, 9, 8]
 folds = rbf.n_folds(data, num_of_folds)
-best_par = rbf.grid_search(folds, lamdas, sigmas, num_of_centers, 'gaussian',
-                           scaling, whtning)
+best_par = rbf.grid_search(folds, lamdas, sigmas, num_of_centers, 'linear',
+                           scaling, whtning, comps)
 ##############
 
 
